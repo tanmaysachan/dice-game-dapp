@@ -5,8 +5,8 @@ import SetString from "./SetString";
 import GameScreen from "./GameScreen";
 import Player1 from "./Player1"
 import Player2 from "./Player2"
-// import Player3 from "./Player3"
-// import Player4 from "./Player4"
+import Player3 from "./Player3"
+import Player4 from "./Player4"
 
 import "bootstrap/dist/css/bootstrap.min.css"
 
@@ -62,6 +62,8 @@ class App extends React.Component {
 
           <Route path="/1" render={(props) => <Player1 drizzle={this.props.drizzle} drizzleState={this.state.drizzleState} {...props}/>}/>
           <Route path="/2" render={(props) => <Player2 drizzle={this.props.drizzle} drizzleState={this.state.drizzleState} {...props}/>}/>
+          <Route path="/3" render={(props) => <Player3 drizzle={this.props.drizzle} drizzleState={this.state.drizzleState} {...props}/>}/>
+          <Route path="/4" render={(props) => <Player4 drizzle={this.props.drizzle} drizzleState={this.state.drizzleState} {...props}/>}/>
         </div>
 	  </Router>
     );

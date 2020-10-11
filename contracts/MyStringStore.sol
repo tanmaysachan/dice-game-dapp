@@ -7,7 +7,6 @@ contract MyStringStore {
   uint public roundStarter;
 
   bool gameStarted;
-  uint turnsSoFar;
 
   bool public fetchable;
 
@@ -33,6 +32,11 @@ contract MyStringStore {
   constructor () public {
     fetchable = false;
     gameStarted = false;
+    dieLeft[1] = 5;
+    dieLeft[2] = 5;
+    dieLeft[3] = 5;
+    dieLeft[4] = 5;
+    dieLeft[5] = 5;
     resetRound(1);
   }
 
@@ -42,21 +46,11 @@ contract MyStringStore {
     reverseAddressMap[msg.sender] = player;
   }
 
-  function validatePlayer(uint player) pure private returns (uint) {
-    if (player == 0) return 4;
-    if (player == 5) return 1;
-    if (player > 5 || player < 0) return 100000000;
-  }
-
   function resetRound(uint firstplayer) private {
     face = (uint(keccak256(abi.encodePacked(now)))%6) + 1;
     bet = 0;
     currentTurn = firstplayer;
     roundStarter = firstplayer;
-    turnsSoFar = 0;
-
-    roundWinner = 0;
-    roundLoser = 0;
 
     counts[1] = 0;
     counts[2] = 0;
@@ -67,34 +61,25 @@ contract MyStringStore {
     pool = 0;
   }
   
-  function getDiceCount(uint player) public view returns (uint) {
-    return dieLeft[player];
-  }
-  
-  function raise(uint incomingbet) public payable {
-    require(msg.sender == addressMap[currentTurn], "Not your turn");
-    require(dieLeft[currentTurn] > 0, "Dice over for you, game over");
-    require(incomingbet >= bet, "illegal bid");
-    require(msg.value >= 5, "Minimum pay is 5 wei");
-    bet = incomingbet;
-  }
-
   function callPrev() public {
     require(msg.sender == addressMap[currentTurn], "Not your turn");
     require(dieLeft[currentTurn] > 0, "Dice over for you, game over");
     require(currentTurn != roundStarter, "Person who started the round cannot call the bet of the previous player");
 
     getRoundWinner();
-
   }
 
   function getRandom(address addr, uint nonce, uint key) view private returns (uint) {
     return (uint(keccak256(abi.encodePacked(now, addr, nonce*key)))%6) + 1;
   }
 
-  function roll(uint nonce) public {
+  function roll(uint nonce, uint incomingbet) public payable {
     require(msg.sender == addressMap[currentTurn], "Not your turn");
     require(dieLeft[currentTurn] > 0, "Dice over for you, game over");
+
+    require(dieLeft[currentTurn] > 0, "Dice over for you, game over");
+    require(incomingbet >= bet, "illegal bid");
+    require(msg.value >= 5, "Minimum pay is 5 wei");
 
     if (dieLeft[currentTurn] > 0) {
       uint rnd = getRandom(msg.sender, nonce, 1);
@@ -132,7 +117,8 @@ contract MyStringStore {
       hashedRolls5[msg.sender] = 0;
     }
 
-    turnsSoFar += 1;
+    bet = incomingbet;
+    pool += msg.value;
 
     currentTurn %= 4;
     currentTurn += 1;
@@ -143,6 +129,7 @@ contract MyStringStore {
 
   function transferPool(uint player) private {
     addressMap[player].transfer(pool);
+    pool = 0;
   }
 
   function revealDie() public view returns (uint[5] memory) {
@@ -154,19 +141,21 @@ contract MyStringStore {
   function getRoundWinner() private {
     if (counts[face] >= bet) {
       uint player = currentTurn - 1;
-      if (currentTurn == 0) currentTurn = 4;
+      if (player == 0) player = 4;
 
       transferPool(player);
       roundWinner = player;
       roundLoser = currentTurn;
+      dieLeft[roundLoser] -= 1;
       resetRound(player);
     } else {
       uint player = currentTurn - 1;
-      if (currentTurn == 0) currentTurn = 4;
+      if (player == 0) player = 4;
 
       transferPool(currentTurn);
       roundWinner = currentTurn;
       roundLoser = player;
+      dieLeft[roundLoser] -= 1;
       resetRound(currentTurn);
     }
     fetchable = true;

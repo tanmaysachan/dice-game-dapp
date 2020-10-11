@@ -14,8 +14,6 @@ export default class Player1 extends Component {
       registered: false,
       playerturn: false,
 
-      secretKey: Math.ceil(Math.random()*100),
-      hash: null,
       dieLeft: 5,
       address: null,
       currentTurn: null,
@@ -40,8 +38,6 @@ export default class Player1 extends Component {
       rollShow: false,
       challengeShow: false,
       challenger: false,
-
-      diceVals: []
     }
   }
 
@@ -114,7 +110,7 @@ export default class Player1 extends Component {
           value: 5,
       });
 
-      this.setState({ rollStackId: stackId, secretKey: random_num });
+      this.setState({ rollStackId: stackId });
     } else {
       this.setState({ alertMessage: "Not your turn! player " + turn + " playing!", alertVariant: "danger", alertShow: true });
     }
@@ -140,14 +136,13 @@ export default class Player1 extends Component {
     const { drizzle } = this.props;
     const contract = drizzle.contracts.MyStringStore;
 
-    const _fetch = contract.methods.revealDie().call().then(function(result) {
-      if (this.state.challenger == true) {
-        this.setState({ challenger: false });
+    const _fetch = contract.methods.revealDie().call().then((result) => {
+      if (result[0] == 0 && result[1] == 0 && result[2] == 0 && result[3] == 0 && result[4] == 0) {
       } else {
-        this.reactDice.rollAll(result);
+        let arr = result.slice(0, this.state.dieLeft);
+        this.reactDice.rollAll(arr);
       }
     });
-
   }
 
   componentDidMount() {
@@ -192,8 +187,16 @@ export default class Player1 extends Component {
     const roundWinner = MyStringStore.roundWinner[this.state.roundWinnerDataKey];
     const roundLoser = MyStringStore.roundLoser[this.state.roundLoserDataKey];
 
+    console.log(fetchable.value);
     if (fetchable.value == true) {
       this.fetchDie();
+    }
+
+    if (roundLoser == this.state.playerId) {
+      this.setState({ dieLeft: this.state.dieLeft - 1 });
+      if (this.state.dieLeft == 0) {
+        this.setState({ alertMessage: "Game over for you, no dice left!", alertVariant: "danger", alertShow: true });
+      }
     }
 
     return (
@@ -206,6 +209,7 @@ export default class Player1 extends Component {
           <h3><Badge variant="danger">Bet: {bet.value}</Badge></h3>
           <h3><Badge variant="info">Last Round Winner: {roundWinner.value != 0 ? roundWinner.value : "No winner yet"}</Badge></h3>
           <h3><Badge variant="info">Last Round Loser: {roundLoser.value != 0 ? roundLoser.value : "No loser yet"}</Badge></h3>
+          <h3><Badge variant="danger">Dice Left: {this.state.dieLeft}</Badge></h3>
         </div>
         <h4> Previous Roll: </h4>
         <ReactDice

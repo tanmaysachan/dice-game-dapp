@@ -6,11 +6,11 @@ import Alert from 'react-bootstrap/Alert'
 import Button from 'react-bootstrap/Button'
 import Badge from 'react-bootstrap/Badge'
 
-export default class Player2 extends Component {
+export default class Player4 extends Component {
   constructor(props){
     super(props)
     this.state = {
-      playerId: 2,
+      playerId: 4,
       registered: false,
       playerturn: false,
 
@@ -143,7 +143,6 @@ export default class Player2 extends Component {
         this.reactDice.rollAll(arr);
       }
     });
-
   }
 
   componentDidMount() {
