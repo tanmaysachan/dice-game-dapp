@@ -6,11 +6,10 @@ import Alert from 'react-bootstrap/Alert'
 import Button from 'react-bootstrap/Button'
 import Badge from 'react-bootstrap/Badge'
 
-export default class Player1 extends Component {
+export default class Player2 extends Component {
   constructor(props){
     super(props)
     this.state = {
-      playerId: 1,
       registered: false,
       playerturn: false,
 
@@ -39,7 +38,6 @@ export default class Player1 extends Component {
       alertShow: false,
       rollShow: false,
       challengeShow: false,
-      challenger: false,
 
       diceVals: []
     }
@@ -66,7 +64,7 @@ export default class Player1 extends Component {
     }
 
     // let drizzle know we want to call the `set` method with `value`
-    const stackId = contract.methods["registerPlayer"].cacheSend(this.state.playerId, { from: addr });
+    const stackId = contract.methods["registerPlayer"].cacheSend(2, { from: addr });
 
     this.setState({ address: addr, registerStackId: stackId });
   }
@@ -101,7 +99,7 @@ export default class Player1 extends Component {
       return;
     }
     const turn = this.isTurn();
-    if (turn == this.state.playerId) {
+    if (turn == 2) {
       this.setState({ alertShow: false, rollShow: true });
 
       const { drizzle, drizzleState } = this.props;
@@ -122,7 +120,7 @@ export default class Player1 extends Component {
 
   challengeEvent = () => {
     const turn = this.isTurn();
-    if (turn == this.state.playerId) {
+    if (turn == 2) {
       this.setState({ alertShow: false, challengeShow: true });
 
       const { drizzle, drizzleState } = this.props;
@@ -130,7 +128,7 @@ export default class Player1 extends Component {
 
       const stackId = contract.methods["callPrev"].cacheSend({ from: this.state.address });
 
-      this.setState({ challengeStackId: stackId, challenger: true });
+      this.setState({ challengeStackId: stackId });
     } else {
       this.setState({ alertMessage: "Not your turn! player " + turn + " playing!", alertVariant: "danger", alertShow: true });
     }
@@ -140,13 +138,18 @@ export default class Player1 extends Component {
     const { drizzle } = this.props;
     const contract = drizzle.contracts.MyStringStore;
 
-    const _fetch = contract.methods.revealDie().call().then(function(result) {
-      if (this.state.challenger == true) {
-        this.setState({ challenger: false });
-      } else {
-        this.reactDice.rollAll(result);
-      }
-    });
+    const { MyStringStore } = this.props.drizzleState.contracts;
+
+    const _fetch = contract.methods.revealDie().call();
+
+    console.log(_fetch);
+  }
+
+  rollDice = () => {
+
+  }
+
+  rollDoneCallback = (num, ind) => {
 
   }
 
@@ -178,7 +181,7 @@ export default class Player1 extends Component {
       return (
         <form>
           <div className="form-group">
-            <input type="text" className="form-control" placeholder={"Enter Public Key for Player " + this.state.playerId} onKeyDown={this.registerUser} />
+            <input type="text" className="form-control" placeholder="Enter Public Key for Player 2" onKeyDown={this.registerUser} />
           </div>
         </form>
       );
@@ -210,6 +213,7 @@ export default class Player1 extends Component {
         <h4> Previous Roll: </h4>
         <ReactDice
           numDice={this.state.dieLeft}
+          rollDone={this.rollDoneCallback}
           ref={dice => this.reactDice = dice}
           disableIndividual={true}
         />
