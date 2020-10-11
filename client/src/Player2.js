@@ -28,6 +28,8 @@ export default class Player2 extends Component {
       roundWinnerDataKey: null,
       roundLoserDataKey: null,
       fetchRollsDataKey: null,
+      gameOverDataKey: null,
+      livesKey: null,
       challengeStackId: null,
       
       bet: null,
@@ -92,6 +94,10 @@ export default class Player2 extends Component {
   }
 
   rollEvent = () => {
+    if (this.state.dieLeft == 0) {
+      this.setState({ alertMessage: "Game over for you!", alertVariant: "danger", alertShow: true });
+      return;
+    }
     if (isNaN(this.state.bet) || this.state.bet === null) {
       this.setState({ alertMessage: "Enter a number for bet!", alertVariant: "danger", alertShow: true });
       return;
@@ -117,6 +123,10 @@ export default class Player2 extends Component {
   }
 
   challengeEvent = () => {
+    if (this.state.dieLeft == 0) {
+      this.setState({ alertMessage: "Game over for you!", alertVariant: "danger", alertShow: true });
+      return;
+    }
     const turn = this.isTurn();
     if (turn == this.state.playerId) {
       this.setState({ alertShow: false, challengeShow: true });
@@ -139,11 +149,9 @@ export default class Player2 extends Component {
     const _fetch = contract.methods.revealDie().call().then((result) => {
       if (result[0] == 0 && result[1] == 0 && result[2] == 0 && result[3] == 0 && result[4] == 0) {
       } else {
-        let arr = result.slice(0, this.state.dieLeft);
-        this.reactDice.rollAll(arr);
+        this.reactDice.rollAll(result);
       }
-    });
-
+    }).catch(error => {  });
   }
 
   componentDidMount() {
@@ -155,8 +163,10 @@ export default class Player2 extends Component {
     const _betDataKey = contract.methods["bet"].cacheCall();
     const _currentTurnDataKey = contract.methods["currentTurn"].cacheCall();
     const _fetchableDataKey = contract.methods["fetchable"].cacheCall();
+    const _gameOver = contract.methods["gameOver"].cacheCall();
     const _roundWinnerDataKey = contract.methods["roundWinner"].cacheCall();
     const _roundLoserDataKey = contract.methods["roundLoser"].cacheCall();
+    const _livesKey = contract.methods["lives"].cacheCall();
 
     // save the `dataKey` to local component state for later reference
     this.setState({
@@ -166,6 +176,8 @@ export default class Player2 extends Component {
       fetchableDataKey: _fetchableDataKey,
       roundWinnerDataKey: _roundWinnerDataKey,
       roundLoserDataKey: _roundLoserDataKey,
+      gameOverDataKey: _gameOver,
+      livesKey: _livesKey
     });
   }
 
@@ -187,16 +199,22 @@ export default class Player2 extends Component {
     const fetchable = MyStringStore.fetchable[this.state.fetchableDataKey];
     const roundWinner = MyStringStore.roundWinner[this.state.roundWinnerDataKey];
     const roundLoser = MyStringStore.roundLoser[this.state.roundLoserDataKey];
+    const gameOver = MyStringStore.gameOver[this.state.gameOverDataKey];
+    const lives = MyStringStore.lives[this.state.livesKey];
 
+    console.log(fetchable.value);
     if (fetchable.value == true) {
       this.fetchDie();
     }
 
-    if (roundLoser == this.state.playerId) {
-      this.setState({ dieLeft: this.state.dieLeft - 1 });
-      if (this.state.dieLeft == 0) {
-        this.setState({ alertMessage: "Game over for you, no dice left!", alertVariant: "danger", alertShow: true });
-      }
+    if (lives.value[this.state.playerId - 1] == 0 || gameOver.value == true) {
+      return(
+        <div>
+          <Alert variant="success" show={true}>
+            Game over! Thank you for playing!
+          </Alert>
+        </div>
+      )
     }
 
     return (
@@ -209,11 +227,11 @@ export default class Player2 extends Component {
           <h3><Badge variant="danger">Bet: {bet.value}</Badge></h3>
           <h3><Badge variant="info">Last Round Winner: {roundWinner.value != 0 ? roundWinner.value : "No winner yet"}</Badge></h3>
           <h3><Badge variant="info">Last Round Loser: {roundLoser.value != 0 ? roundLoser.value : "No loser yet"}</Badge></h3>
-          <h3><Badge variant="danger">Dice Left: {this.state.dieLeft}</Badge></h3>
+          <h3><Badge variant="danger">Lives Left: {lives.value[this.state.playerId - 1]}</Badge></h3>
         </div>
         <h4> Previous Roll: </h4>
         <ReactDice
-          numDice={this.state.dieLeft}
+          numDice={5}
           ref={dice => this.reactDice = dice}
           disableIndividual={true}
         />
