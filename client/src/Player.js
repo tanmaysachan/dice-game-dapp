@@ -6,11 +6,11 @@ import Alert from 'react-bootstrap/Alert'
 import Button from 'react-bootstrap/Button'
 import Badge from 'react-bootstrap/Badge'
 
-export default class Player3 extends Component {
+export default class Player extends Component {
   constructor(props){
     super(props)
     this.state = {
-      playerId: 3,
+      playerId: this.props.playerId,
       registered: false,
       playerturn: false,
 
